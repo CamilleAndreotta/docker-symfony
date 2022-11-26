@@ -1,0 +1,69 @@
+version : '3'
+
+networks:
+  tdl:
+    driver: bridge
+
+services: 
+
+  web:
+    container_name: web_tdl
+    user: '1000:1000'
+    build: 
+      context: .
+      dockerfile: apachephp.dockerfile
+    ports:
+      - 980:80
+    volumes:
+      - .:/var/www/html/
+    networks:
+      - tdl
+  
+  db:
+    container_name: db_tdl
+    image: mysql:latest
+    restart: unless-stopped
+    ports:
+      - 9306:3306
+    volumes:
+      - ./db/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - tdl
+
+  adminer:
+    container_name: adminer_tdl
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    networks:
+      - tdl
+  
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin_tdl
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 8082:80
+    environment:
+      PMA_HOST: db
+    networks:
+      - tdl
+
+  maildev:
+    image: maildev/maildev
+    container_name: maildev_tdl
+    command: bin/maildev --web 80 --smtp 25 --hide-extension STARTTLS
+    ports:
+      - "8081:80"
+    restart: always 
+    networks:
+      - tdl
+    
+
